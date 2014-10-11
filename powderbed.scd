@@ -1,11 +1,13 @@
 // All units are in mm
+inchTOmm = 25.4;
 
-isExploded = 0;
+isExploded = 1;
 
 // Width of the MDF material
 mdfWidth = 17;
 
-inchToMm = 25.4;
+// Width of the powderbox sheet-metal material
+smWidth = 1/16 * inchTOmm;
 
 // Descibe the solid model of the scissor jack work space
 jackBaseWidth = 130;
@@ -43,17 +45,16 @@ frameSideBottomLength = frameMiddleWidth + (pistonHeight - jackBaseWidth)/2;
 frameSideBottomHeight = 260;
 
 frameMiddleBottomWidth = mdfWidth;
-frameMiddleBottomLength = frameSideLength - (frameMiddleWidth*2 + pistonHeight + jackBaseWidth);
+frameMiddleBottomLength = 2 * mdfWidth * 2 + frameMiddleWidth;
 frameMiddleBottomHeight = 260;
 
 angleIronWidth = 1;
 angleIronHeight = 30;
 
-angleIronSideLength = 36 * inchToMm;
-angleIronEndLength = 12 * inchToMm;
+angleIronSideLength = 36 * inchTOmm;
 
-railLength = 36 * inchToMm;
-railRadius = (0.25 * inchToMm)/2;
+railLength = 36 * inchTOmm;
+railRadius = (0.25 * inchTOmm)/2;
 
 module powderbed_piston() {
    color([0.2, 0.4, 0.9])
@@ -113,11 +114,6 @@ module xrail_angleiron_side() {
        angle_iron(length =angleIronSideLength );
 }
 
-module xrail_angleiron_end() {
-   color([0.3, 0.9, 0.2])
-     angle_iron(length =angleIronEndLength);
-}
-
 module xrail_bariron() {
     color([0.7, 0.7, 0.7])
       rotate([90, 0, 90])
@@ -154,13 +150,13 @@ xrailTruckHeight = 12.5;
 
 // X axis rails
 module powderbed_xrail() {
-        translate([-(frameMiddleWidth + angleIronEndLength)/2, -frameSideWidth, -(railRadius*2 + xrailTruckHeight)])
+        translate([-(frameMiddleWidth + angleIronSideLength)/2, -frameSideWidth, -(railRadius*2 + xrailTruckHeight)])
 
-            xrail_angleiron_end();
+            xrail_angleiron_side();
 
-        translate([-(frameMiddleWidth + angleIronEndLength)/2, (frameMiddleLength + frameSideWidth) + angleIronWidth, -(railRadius*2 + xrailTruckHeight)])
+        translate([-(frameMiddleWidth + angleIronSideLength)/2, (frameMiddleLength + frameSideWidth) + angleIronWidth, -(railRadius*2 + xrailTruckHeight)])
             rotate([90, 0, 0])
-            xrail_angleiron_end();
+            xrail_angleiron_side();
 
         translate([-(pistonHeight + frameMiddleWidth*2 + mdfWidth), -(frameSideWidth + 9.5), -(railRadius + xrailTruckHeight)])
             xrail_bariron();
@@ -195,12 +191,97 @@ module powderbed_frame() {
         translate([0, frameSideWidth, frameSideHeight - frameMiddleHeight - frameSideBottomWidth])
             powderbed_frame_side_bottom();
 
-        translate([frameSideBottomLength + jackBaseWidth, frameSideWidth, frameSideHeight - frameMiddleHeight - frameSideBottomWidth])
+        translate([(frameSideLength - frameMiddleBottomLength)/2, frameSideWidth, frameSideHeight - frameMiddleHeight - frameSideBottomWidth])
             powderbed_frame_middle_bottom();
 
-        translate([frameSideBottomLength + jackBaseWidth*2 + frameMiddleBottomLength, frameSideWidth, frameSideHeight - frameMiddleHeight - frameSideBottomWidth])
+        translate([frameSideLength - frameSideBottomLength, frameSideWidth, frameSideHeight - frameMiddleHeight - frameSideBottomWidth])
             powderbed_frame_side_bottom();
     }
+}
+
+pboxSideWidth = smWidth;
+pboxSideLength = frameMiddleLength - mdfWidth*4 - smWidth*2;
+pboxSideHeight = pboxSideLength;
+
+pboxBLipWidth = smWidth;
+pboxBLipHeight = mdfWidth*2;
+pboxBLipLength = pboxSideLength - pboxBLipHeight;
+
+module powderbox_blip(lipid = 0) {
+    color([0.8, 0.0, 0.8])
+    cube([pboxBLipLength, pboxBLipWidth, pboxBLipHeight]);
+}
+
+pboxTLipWidth = smWidth;
+pboxTLipHeight = mdfWidth;
+pboxTLipLength = pboxSideLength;
+
+module powderbox_tlip(lipid = 0) {
+    if (lipid != 3) {
+      color([0.8, 0.0, 0.1])
+        cube([pboxTLipLength, pboxTLipWidth, pboxTLipHeight]);
+    }
+}
+
+pboxSLipWidth = smWidth;
+pboxSLipHeight = pboxSideHeight;
+pboxSLipLength = mdfWidth;
+
+module powderbox_slip(lipid = 0) {
+   if (lipid == 3) {
+     color([0.8, 0.0, 1.0])
+       cube([pboxSLipLength, pboxSLipWidth, pboxSLipHeight]);
+   }
+}
+
+module powderbox_side(lipid = 0, exploded = 0) {
+    color([0.8, 0.0, 0.4])
+     if (lipid == 3) {
+      cube([pboxSideLength, pboxSideWidth, pboxSideHeight+pboxTLipWidth]);
+     } else {
+      cube([pboxSideLength, pboxSideWidth, pboxSideHeight]);
+     }
+   if (exploded) {
+      translate([0, 0, -pboxBLipHeight])
+          powderbox_blip(lipid);
+      translate([0, 0, pboxSideHeight])
+           powderbox_tlip(lipid);
+      translate([pboxSideLength, 0, 0])
+           powderbox_slip(lipid); 
+   } else {
+      translate([pboxSideWidth, 0, 0])
+          rotate([-90, 0, 0])
+            powderbox_blip(lipid);
+      translate([0, 0, pboxSideHeight])
+          rotate([90, 0, 0])
+            powderbox_tlip(lipid);
+      translate([pboxSideLength + pboxSideWidth*2, pboxSideWidth, 0])
+          rotate([0, 0, 90])
+            powderbox_slip(lipid);
+   }
+}
+
+module powderbox(exploded = 0) {
+   if (exploded) {
+      for (i = [0:3]) {
+         translate([pboxSideLength * i, 0, 0])
+          powderbox_side(i, exploded);
+      }
+   } else {
+      translate([-pboxSideWidth, 0, -(pboxSideHeight + pboxTLipWidth)]) {
+        translate([0, -pboxSideWidth, 0])
+           powderbox_side(2);
+        translate([0, pboxSideLength, 0])
+          rotate([0, 0, -90])
+             powderbox_side(3);
+        translate([pboxSideLength, -pboxSideWidth, 0])
+           rotate([0, 0, 90])
+             powderbox_side(0);
+        translate([pboxSideLength, pboxSideLength, 0])
+           rotate([0, 0, 180])
+             powderbox_side(1);
+      }
+   }
 }
 
 jackHeightOffset = -(jackMax-jackMin);
@@ -222,15 +303,24 @@ if (isExploded) {
      rotate([-90, 0, 0]) translate([200, 10, 0])
          powderbed_frame_middle_bottom();
   
+     translate([300, 0, -250])
+     powderbox(1);
 } else {
     powderbed_frame();
 
     powderbed_xrail();
 
-    jack_clearance();
+    // jack_clearance();
 
-    translate([- (frameMiddleWidth + pistonHeight), 0, 0])
-        jack_clearance();
+    // translate([- (frameMiddleWidth + pistonHeight), 0, 0])
+        // jack_clearance();
+
+    translate([pboxSideWidth, (frameMiddleLength - pboxSideLength)/2, 0])
+    powderbox(0);
+
+    translate([-(pboxSideWidth+frameMiddleWidth), (frameMiddleLength + pboxSideLength)/2, 0])
+    rotate([0, 0, 180])
+    powderbox(0);
 }
 
 // vim: set tabstop=4 softtabstop=4 shiftwidth=4 expandtab:
