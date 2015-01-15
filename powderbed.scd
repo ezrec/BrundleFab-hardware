@@ -1,28 +1,13 @@
 // All units are in mm
 inchTOmm = 25.4;
 
-isExploded = 1;
+isExploded = 0;
 
 // Width of the MDF material
 mdfWidth = 17;
 
-// Width of the powderbox sheet-metal material
+// Width of the sheet-metal material
 smWidth = 1/16 * inchTOmm;
-
-// Descibe the solid model of the scissor jack work space
-jackBaseWidth = 130;
-jackBaseLength = 380;
-jackBaseHeight = 10;
-
-jackMin = 100;
-jackMax = 420;
-jackWidth = 70;
-jackLength = 440;
-
-jackShaftHeight = 200;
-jackHeadHeight = 400;
-jackHeadWidth = 45;
-jackHeadLength = 70;
 
 
 frameBottomHeight = mdfWidth;
@@ -41,7 +26,7 @@ pistonLength =  frameMiddleLength;
 
 
 frameSideBottomWidth = mdfWidth;
-frameSideBottomLength = frameMiddleWidth + (pistonHeight - jackBaseWidth)/2;
+frameSideBottomLength = frameMiddleWidth;
 frameSideBottomHeight = 260;
 
 frameMiddleBottomWidth = mdfWidth;
@@ -60,24 +45,6 @@ module powderbed_piston() {
    color([0.2, 0.4, 0.9])
      cube([pistonHeight, pistonLength, pistonWidth]);
 }
-
-module jack_clearance() {
-    translate([pistonHeight/2, -(jackBaseLength - pistonLength)/2, -(pistonWidth + jackHeadHeight)]) {
-        translate([jackBaseWidth/-2, 0, 0]) {
-            color([0.5, 0.3, 0.4])
-                cube([jackBaseWidth, jackBaseLength, jackBaseHeight]);
-            color([0.5, 0.3, 0.4])
-                translate([(jackBaseWidth-jackWidth)/2, (jackBaseLength - jackLength)/2, 0])
-                cube([jackWidth, jackLength, jackShaftHeight]);
-            color([0.5, 0.3, 0.4])
-                translate([(jackBaseWidth-jackHeadWidth)/2, (jackBaseLength - jackHeadLength)/2, 0])
-                cube([jackHeadWidth, jackHeadLength, jackHeadHeight]);
-            translate([(jackBaseWidth - pistonHeight)/2, (jackBaseLength - pistonLength)/2, jackHeadHeight])
-                powderbed_piston();
-        }
-    }
-}
-
 
 module powderbed_frame_side() {
     cube([frameSideLength, frameSideWidth, frameSideHeight]);
@@ -169,7 +136,6 @@ module powderbed_xrail() {
 }
 
 // Describe the solid model of the powerbed frame
-// NOTE: This is NOT with the accounting of the jack!
 module powderbed_frame() {
 
     translate([-(frameSideLength+frameMiddleWidth)/2, -frameSideWidth, -frameSideHeight]) {
@@ -207,84 +173,13 @@ pboxBLipWidth = smWidth;
 pboxBLipHeight = mdfWidth*2;
 pboxBLipLength = pboxSideLength - pboxBLipHeight;
 
-module powderbox_blip(lipid = 0) {
-    color([0.8, 0.0, 0.8])
-    cube([pboxBLipLength, pboxBLipWidth, pboxBLipHeight]);
-}
-
 pboxTLipWidth = smWidth;
 pboxTLipHeight = mdfWidth;
 pboxTLipLength = pboxSideLength;
 
-module powderbox_tlip(lipid = 0) {
-    if (lipid != 3) {
-      color([0.8, 0.0, 0.1])
-        cube([pboxTLipLength, pboxTLipWidth, pboxTLipHeight]);
-    }
-}
-
 pboxSLipWidth = smWidth;
 pboxSLipHeight = pboxSideHeight;
 pboxSLipLength = mdfWidth;
-
-module powderbox_slip(lipid = 0) {
-   if (lipid == 3) {
-     color([0.8, 0.0, 1.0])
-       cube([pboxSLipLength, pboxSLipWidth, pboxSLipHeight]);
-   }
-}
-
-module powderbox_side(lipid = 0, exploded = 0) {
-    color([0.8, 0.0, 0.4])
-     if (lipid == 3) {
-      cube([pboxSideLength, pboxSideWidth, pboxSideHeight+pboxTLipWidth]);
-     } else {
-      cube([pboxSideLength, pboxSideWidth, pboxSideHeight]);
-     }
-   if (exploded) {
-      translate([0, 0, -pboxBLipHeight])
-          powderbox_blip(lipid);
-      translate([0, 0, pboxSideHeight])
-           powderbox_tlip(lipid);
-      translate([pboxSideLength, 0, 0])
-           powderbox_slip(lipid); 
-   } else {
-      translate([pboxSideWidth, 0, 0])
-          rotate([-90, 0, 0])
-            powderbox_blip(lipid);
-      translate([0, 0, pboxSideHeight])
-          rotate([90, 0, 0])
-            powderbox_tlip(lipid);
-      translate([pboxSideLength + pboxSideWidth*2, pboxSideWidth, 0])
-          rotate([0, 0, 90])
-            powderbox_slip(lipid);
-   }
-}
-
-module powderbox(exploded = 0) {
-   if (exploded) {
-      for (i = [0:3]) {
-         translate([pboxSideLength * i, 0, 0])
-          powderbox_side(i, exploded);
-      }
-   } else {
-      translate([-pboxSideWidth, 0, -(pboxSideHeight + pboxTLipWidth)]) {
-        translate([0, -pboxSideWidth, 0])
-           powderbox_side(2);
-        translate([0, pboxSideLength, 0])
-          rotate([0, 0, -90])
-             powderbox_side(3);
-        translate([pboxSideLength, -pboxSideWidth, 0])
-           rotate([0, 0, 90])
-             powderbox_side(0);
-        translate([pboxSideLength, pboxSideLength, 0])
-           rotate([0, 0, 180])
-             powderbox_side(1);
-      }
-   }
-}
-
-jackHeightOffset = -(jackMax-jackMin);
 
 if (isExploded) {
     rotate([0, 0, 90])
@@ -303,24 +198,11 @@ if (isExploded) {
      rotate([-90, 0, 0]) translate([200, 10, 0])
          powderbed_frame_middle_bottom();
   
-     translate([300, 0, -250])
-     powderbox(1);
 } else {
     powderbed_frame();
 
     powderbed_xrail();
-
-    // jack_clearance();
-
-    // translate([- (frameMiddleWidth + pistonHeight), 0, 0])
-        // jack_clearance();
-
-    translate([pboxSideWidth, (frameMiddleLength - pboxSideLength)/2, 0])
-    powderbox(0);
-
-    translate([-(pboxSideWidth+frameMiddleWidth), (frameMiddleLength + pboxSideLength)/2, 0])
-    rotate([0, 0, 180])
-    powderbox(0);
+    
 }
 
 // vim: set tabstop=4 softtabstop=4 shiftwidth=4 expandtab:
