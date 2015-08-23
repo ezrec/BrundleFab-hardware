@@ -100,18 +100,24 @@ irInset = mdfWidth * 2;
 ///////////// Sheet metal manipulations ///////////////////
 
 // Drill a hold for the 'standard bolt'
-module drill()
+module drill(radius = boltWidth/2)
 {
 	drillRes = 10;
-	translate([0, 0, -smWidth])
+
+	if (isFlat) {
+		translate([-radius, -radius, -smWidth])
+		cube([radius*2, radius*2, smWidth*3]);
+	} else {
+		translate([0, 0, -smWidth])
 		scale([1/drillRes, 1/drillRes, smWidth*3]) 
-			cylinder(r = boltWidth*drillRes/2);
+			cylinder(r = radius*drillRes);
+	}
 }
 
 // Drill a pilot hold for the 'standard screw'
-module pilot()
+module pilot(radius = boltWidth/4)
 {
-	scale([1/3, 1/3, 1]) drill();
+	drill(radius);
 }
 
 // Bend along the Y axis, taking into account sheet metal bed radii offsets
@@ -153,8 +159,8 @@ module lc_holder(isFlat = false)
 			cube([lcHeight*sin(60), pbLength, smWidth]);
 			translate([lcHeight*sin(60), 0, 0])
 			y_bend(60, isFlat) {
-				cube([lcWidth - 2*cos(60)*lcHeight, pbLength, smWidth]);
-				translate([lcWidth - 2*cos(60)*lcHeight, 0, 0])
+				cube([lcWidth - 2*cos(60)*(lcHeight + smWidth), pbLength, smWidth]);
+				translate([lcWidth - 2*cos(60)*(lcHeight + smWidth), 0, 0])
 				y_bend(60, isFlat) {
 					cube([lcHeight*sin(60), pbLength, smWidth]);		
 					translate([lcHeight*sin(60), 0, 0]) 
@@ -176,7 +182,6 @@ module lc_holder(isFlat = false)
 loHeight = lcHeight + lcGap + smWidth;
 loMount = lmWidth - lcGap;
 
-
 // Outer light chamber shield
 module lc_shield(isFlat = true)
 {
@@ -193,8 +198,8 @@ module lc_shield(isFlat = true)
 		cube([loHeight*sin(60), pbLength, smWidth]);
 		translate([loHeight*sin(60), 0, 0])
 		y_bend(60, isFlat) {
-			cube([lcWidth + smWidth + lcGap*2 - 2*cos(60)*loHeight, pbLength, smWidth]);
-			translate([lcWidth + smWidth + lcGap*2 - 2*cos(60)*loHeight, 0, 0])
+			cube([lcWidth + lcGap*2 - 2*cos(60)*(loHeight + smWidth), pbLength, smWidth]);
+			translate([lcWidth + lcGap*2 - 2*cos(60)*(loHeight + smWidth), 0, 0])
 			y_bend(60, isFlat) {
 				cube([loHeight*sin(60), pbLength, smWidth]);
 				translate([loHeight*sin(60), 0, 0])
@@ -207,7 +212,7 @@ module lc_shield(isFlat = true)
 				  			translate([lmWidth/2, boltWidth*3, 0]) drill();
 							translate([lmWidth/2, pbLength/2, 0]) drill();
 							translate([lmWidth/2, pbLength - boltWidth*3, 0]) drill();
-						}
+						}			
 					}					
 				}
 			}
@@ -255,7 +260,7 @@ module lh_irmount(isFlat = true)
 	// Light shield
 	translate([0, smCut, 0])
 	y_bend(90, isFlat)
-	cube([irHole/2-smWidth/2, irHole-smCut*2, smWidth]);
+	cube([irHole/2-smCut/2, irHole-smCut*2, smWidth]);
 
 	// Thermopile front retention flap
 	translate([irHole/2, isFlat ? smBend90 : smWidth, 0])
@@ -268,12 +273,11 @@ module lh_irmount(isFlat = true)
 			};
 
 	// Thermopile back retention flap
-	translate([irHole/2, isFlat ? (irHole/2-smBend90) : irHole, 0])
-		rotate([isFlat ? 0 : 90, 0, 0])
-			translate([smCut/2,smCut/2,0])
+	translate([irHole/2 + smCut, isFlat ? (irHole-smBend90) : irHole, isFlat ? smWidth : 0])
+		rotate([isFlat ? 180 : 90, 0, 0])
 			difference() {
-				cube([irHole/2-smCut*1.5, irHole/2-smCut/2, smWidth]);
-				translate([irHole/4-smCut, irHole/4, 0])
+				cube([irHole/2-smCut*2, irHole/2-smCut*2, smWidth]);
+				translate([(irHole/2-smCut*2)/2, (irHole/2-smCut*2)/2,0])
 				drill();
 			};
 
@@ -300,16 +304,14 @@ module lh_plate(isFlat = true)
 			mdfWidth*2 + pbLength, smWidth]);
 
      translate([0, mdfWidth, 0]) {
+
+
 			// Heat break & emergency powder return
-			//* 
-			for (r = [ 0 : boltWidth*2 : hbWidth - boltWidth*2 ]) {
-				translate([r, 0, 0])
-				for (h = [ 0 : boltWidth*2 : pbLength]) {
-					translate([boltWidth, boltWidth/2 + h, 0])
-						drill();
-					translate([boltWidth*2, boltWidth+boltWidth/2 + h, 0])
-						drill();
-				}
+		  for (h = [ 0 : hbWidth/3 : pbLength - hbWidth/3]) {
+				translate([hbWidth/3, hbWidth/3 + h, 0])
+					drill((hbWidth/3 - smCut)/2);
+				translate([hbWidth/3*2, hbWidth/3*1.5 + h, 0])
+					drill((hbWidth/3 - smCut)/2);
 			}
 
 	  		// Light chamber heat shield rear mountings
@@ -432,8 +434,22 @@ module layerhead(isFlat = true)
 	translate([0, mdfWidth, 0])
 	lh_seal(isFlat);
 
+}
 
-   color([0.8,0,0.8]) 
+if (isFlat) {
+  projection(cut=true) translate([0, 0, -smWidth])
+  {
+		layerhead(isFlat);
+		translate([pbWidth * 1.2, 0, 0])
+		lc_holder(isFlat);
+		translate([pbWidth + lcWidth * 4, 0, 0])
+		lc_shield(isFlat);
+	}
+} else {
+	layerhead(isFlat);
+
+
+  color([0.8,0,0.8]) 
 	translate([(isFlat ? pbWidth + lcWidth : (hbWidth + lmWidth)), mdfWidth, isFlat ? 0 : smWidth])
 			lc_holder(isFlat);
 
@@ -441,19 +457,10 @@ module layerhead(isFlat = true)
 		translate([isFlat ? (pbWidth + lcWidth * 4) : hbWidth, mdfWidth, isFlat ? 0 : smWidth*2])
 			lc_shield(isFlat);
 
-	if (!isFlat) {
-   	% translate([prOffset, 0, smWidth])
-			pc_ghost();
-		% translate([hbWidth + lmWidth + lcWidth/2, mdfWidth, lcHeight/2-2.5/2])
-			rotate([-90, 0, 0]) scale([1, 1, pbLength]) cylinder(r=2.5);
-	}
-}
 
-//isFlat=true;
-if (isFlat) {
-  // projection(cut=true) translate([0, 0, -smWidth])
-		layerhead(isFlat);
-} else {
-	layerhead(isFlat);
+   % translate([prOffset, 0, smWidth])
+		pc_ghost();
+	% translate([hbWidth + lmWidth + lcWidth/2, mdfWidth, lcHeight/2-2.5/2])
+		rotate([-90, 0, 0]) scale([1, 1, pbLength]) cylinder(r=2.5);
 }
 
