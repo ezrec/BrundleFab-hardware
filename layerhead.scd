@@ -265,10 +265,10 @@ module lh_irmount(isFlat = true)
 	// Thermopile front retention flap
 	translate([irHole/2, isFlat ? smBend90 : smWidth, 0])
 		rotate([isFlat ? 0 : 90, 0, 0])
-			translate([smCut/2,0,0])
+			translate([smCut,0,0])
 			difference() {
-				cube([irHole/2-smCut*1.5, irHole/2-smCut/2, smWidth]);
-				translate([irHole/4-smCut, irHole/4, 0])
+				cube([irHole/2-smCut*2, irHole/2-smCut, smWidth]);
+				translate([(irHole/2-smCut*2)/2, (irHole/2-smCut)/2, 0])
 				drill();
 			};
 
@@ -276,8 +276,8 @@ module lh_irmount(isFlat = true)
 	translate([irHole/2 + smCut, isFlat ? (irHole-smBend90) : irHole, isFlat ? smWidth : 0])
 		rotate([isFlat ? 180 : 90, 0, 0])
 			difference() {
-				cube([irHole/2-smCut*2, irHole/2-smCut*2, smWidth]);
-				translate([(irHole/2-smCut*2)/2, (irHole/2-smCut*2)/2,0])
+				cube([irHole/2-smCut*2, irHole/2-smCut, smWidth]);
+				translate([(irHole/2-smCut*2)/2, (irHole/2-smCut)/2,0])
 				drill();
 			};
 
