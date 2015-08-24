@@ -159,8 +159,8 @@ module lc_holder(isFlat = false)
 			cube([lcHeight*sin(60), pbLength, smWidth]);
 			translate([lcHeight*sin(60), 0, 0])
 			y_bend(60, isFlat) {
-				cube([lcWidth - 2*cos(60)*(lcHeight + smWidth), pbLength, smWidth]);
-				translate([lcWidth - 2*cos(60)*(lcHeight + smWidth), 0, 0])
+				cube([lcWidth - sin(60)*(lcHeight + smWidth), pbLength, smWidth]);
+				translate([lcWidth - sin(60)*(lcHeight + smWidth), 0, 0])
 				y_bend(60, isFlat) {
 					cube([lcHeight*sin(60), pbLength, smWidth]);		
 					translate([lcHeight*sin(60), 0, 0]) 
@@ -198,8 +198,8 @@ module lc_shield(isFlat = true)
 		cube([loHeight*sin(60), pbLength, smWidth]);
 		translate([loHeight*sin(60), 0, 0])
 		y_bend(60, isFlat) {
-			cube([lcWidth + lcGap*2 - 2*cos(60)*(loHeight + smWidth), pbLength, smWidth]);
-			translate([lcWidth + lcGap*2 - 2*cos(60)*(loHeight + smWidth), 0, 0])
+			cube([lcWidth + lcGap*2 - sin(60)*(loHeight + smWidth), pbLength, smWidth]);
+			translate([lcWidth + lcGap*2 - sin(60)*(loHeight + smWidth), 0, 0])
 			y_bend(60, isFlat) {
 				cube([loHeight*sin(60), pbLength, smWidth]);
 				translate([loHeight*sin(60), 0, 0])
