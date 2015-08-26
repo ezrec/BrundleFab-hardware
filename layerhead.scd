@@ -109,7 +109,7 @@ module drill(radius = boltWidth/2)
 		cube([radius*2, radius*2, smWidth*3]);
 	} else {
 		translate([0, 0, -smWidth])
-		scale([1/drillRes, 1/drillRes, smWidth*3]) 
+		scale([1/drillRes, 1/drillRes, smWidth*3])
 			cylinder(r = radius*drillRes);
 	}
 }
@@ -131,7 +131,7 @@ module y_bend(angle, isFlat = true)
 	} else {
 		rotate([0, isFlat ? 0 : angle, 0])
 		children();
-	}		
+	}
 }
 
 // Generate a half-pipe
@@ -186,12 +186,12 @@ module lc_holder(isFlat = false)
 		}
 
 		scale([1, pbLength, 1])
-		translate([lmWidth, 0, 0]) 
+		translate([lmWidth, 0, 0])
 		y_bend(90, isFlat)
 		y_pipe(lcWidth/2, isFlat)
 		y_bend(-90, isFlat)
 		difference() {
-			y_flat(lmWidth, isFlat);		
+			y_flat(lmWidth, isFlat);
 	  		// Light chamber heat shield front mountings
 			scale([1, 1/pbLength, 1]) {
 	  			translate([lmWidth/2, boltWidth*3, 0]) pilot();
@@ -210,7 +210,7 @@ module lc_shield(isFlat = true)
 {
 	difference() {
 			cube([loMount, pbLength, smWidth]);
-  
+
 	  		// Light chamber heat shield rear mountings
 	  		translate([lmWidth/2, boltWidth*3, 0]) drill();
 			translate([lmWidth/2, pbLength/2, 0]) drill();
@@ -227,7 +227,7 @@ module lc_shield(isFlat = true)
 	y_bend(-60, isFlat)
 	difference() {
 		y_flat(loMount, isFlat);
-  
+
 		// Light chamber heat shield rear mountings
 		scale([1, 1/pbLength, 1])
 		translate([loMount - lmWidth, 0, 0]) {
@@ -265,7 +265,7 @@ module pc_ghost()
 		cube([pcWidth, pbLength + mdfWidth*2, pcHeight]);
 
 	// Pen
-	translate([pcWidth, 0, -penDepth]) 
+	translate([pcWidth, 0, -penDepth])
 		difference() {
 			cube([penWidth, pbLength + mdfWidth*2, penHeight]);
 			translate([-1, -1, -1])
@@ -311,7 +311,7 @@ module lh_irmount(isFlat = true)
 				}
 			}
 	}
-			
+
 }
 
 // Layerhead Plate
@@ -364,7 +364,7 @@ module lh_plate(isFlat = true)
 					translate([0, pbLength/5 * (i+1), 0])
 					cube([prWidth+smWidth*4, pfWidth+smCut*2, smWidth*3]);
 				}
-			}	
+			}
 		}
 	}
 
@@ -468,7 +468,7 @@ if (isFlat) {
 	layerhead(isFlat);
 
 
-  color([0.8,0,0.8]) 
+  color([0.8,0,0.8])
 	translate([(isFlat ? pbWidth + lcWidth : (hbWidth + lmWidth)), mdfWidth, isFlat ? 0 : smWidth])
 			lc_holder(isFlat);
 
