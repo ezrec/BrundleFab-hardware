@@ -546,6 +546,10 @@ if (isFlat) {
 		lc_holder(isFlat);
 		translate([pbWidth + lcWidth * 5, 0, 0])
 		lc_shield(isFlat);
+		translate([pbWidth + lcWidth * 9, 0, 0])
+		lc_stiffener();
+		translate([pbWidth + lcWidth * 11, 0, 0])
+		lc_stiffener();
 	}
 } else {
 	layerhead(isFlat);
